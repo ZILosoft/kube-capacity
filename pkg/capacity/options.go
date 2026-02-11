@@ -26,5 +26,7 @@ type Options struct {
 	ImpersonateGroup      string
 	UsePrometheus         bool
 	PrometheusEndpoint    string
+	PrometheusWindow      string
+	PrometheusAggregation string
 	UtilPercent           string
 }

@@ -34,12 +34,21 @@ type prometheusResult struct {
 	Value  []interface{}     `json:"value"`
 }
 
-const (
-	containerCPUQuery    = `sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m]))`
-	containerMemQuery    = `sum by (namespace, pod, container) (container_memory_working_set_bytes{container!="",container!="POD"})`
-	nodeCPUQuery         = `sum by (node) (rate(container_cpu_usage_seconds_total{container!=""}[5m]))`
-	nodeMemQuery         = `sum by (node) (container_memory_working_set_bytes{container!=""})`
-)
+func containerCPUQuery(agg, window string) string {
+	return fmt.Sprintf(`%s_over_time(sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m]))[%s:])`, agg, window)
+}
+
+func containerMemQuery(agg, window string) string {
+	return fmt.Sprintf(`%s_over_time(sum by (namespace, pod, container) (container_memory_working_set_bytes{container!="",container!="POD"})[%s:])`, agg, window)
+}
+
+func nodeCPUQuery(agg, window string) string {
+	return fmt.Sprintf(`%s_over_time(sum by (node) (rate(container_cpu_usage_seconds_total{container!=""}[5m]))[%s:])`, agg, window)
+}
+
+func nodeMemQuery(agg, window string) string {
+	return fmt.Sprintf(`%s_over_time(sum by (node) (container_memory_working_set_bytes{container!=""})[%s:])`, agg, window)
+}
 
 var prometheusLabelSelectors = []string{
 	"app.kubernetes.io/name=prometheus",
@@ -124,13 +133,16 @@ func getPrometheusMetrics(clientset kubernetes.Interface, opts Options) (*v1beta
 		return queryPrometheus(clientset, endpoint, query)
 	}
 
+	window := opts.PrometheusWindow
+	agg := opts.PrometheusAggregation
+
 	// Query container-level CPU and memory
-	cpuResp, err := queryFn(containerCPUQuery)
+	cpuResp, err := queryFn(containerCPUQuery(agg, window))
 	if err != nil {
 		return nil, nil, fmt.Errorf("querying container CPU: %w", err)
 	}
 
-	memResp, err := queryFn(containerMemQuery)
+	memResp, err := queryFn(containerMemQuery(agg, window))
 	if err != nil {
 		return nil, nil, fmt.Errorf("querying container memory: %w", err)
 	}
@@ -138,12 +150,12 @@ func getPrometheusMetrics(clientset kubernetes.Interface, opts Options) (*v1beta
 	pmList := buildPodMetricsList(cpuResp, memResp)
 
 	// Query node-level CPU and memory
-	nodeCPUResp, err := queryFn(nodeCPUQuery)
+	nodeCPUResp, err := queryFn(nodeCPUQuery(agg, window))
 	if err != nil {
 		return nil, nil, fmt.Errorf("querying node CPU: %w", err)
 	}
 
-	nodeMemResp, err := queryFn(nodeMemQuery)
+	nodeMemResp, err := queryFn(nodeMemQuery(agg, window))
 	if err != nil {
 		return nil, nil, fmt.Errorf("querying node memory: %w", err)
 	}

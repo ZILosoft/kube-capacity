@@ -96,6 +96,12 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&opts.PrometheusEndpoint,
 		"prometheus-endpoint", "", "",
 		"Prometheus endpoint as namespace/service:port or direct URL; auto-discovered via app.kubernetes.io/name=prometheus label if not set")
+	rootCmd.PersistentFlags().StringVarP(&opts.PrometheusWindow,
+		"prometheus-window", "", "15m",
+		"time window for Prometheus metrics aggregation (e.g. 5m, 15m, 1h)")
+	rootCmd.PersistentFlags().StringVarP(&opts.PrometheusAggregation,
+		"prometheus-aggregation", "", "avg",
+		"aggregation function for Prometheus metrics over the window: avg (default) or max")
 	rootCmd.PersistentFlags().StringVarP(&opts.UtilPercent,
 		"util-percent", "", "node",
 		"base for utilization percentage: node (default, % of node allocatable), request (% of resource request), limit (% of resource limit)")
