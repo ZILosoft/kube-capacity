@@ -140,6 +140,18 @@ kube-capacity --prometheus --prometheus-endpoint my-namespace/my-prometheus:9090
 
 The endpoint can be specified as a direct URL (`http://...` or `https://...`) or as a Kubernetes service in `namespace/service:port` format.
 
+By default, metrics are averaged over the last 15 minutes. You can change the time window and aggregation function:
+
+```
+# average over 1 hour (default aggregation is avg)
+kube-capacity --prometheus --prometheus-window=1h
+
+# peak (max) utilization over 30 minutes
+kube-capacity --prometheus --prometheus-aggregation=max --prometheus-window=30m
+```
+
+Supported aggregation functions: `avg` (default), `max`.
+
 ### Sorting
 To highlight the nodes, pods, and containers with the highest metrics, you can sort by a variety of columns:
 
@@ -248,6 +260,10 @@ kube-capacity --pods --containers --util --output tsv
                                     Prometheus endpoint as namespace/service:port
                                     or direct URL; auto-discovered via
                                     app.kubernetes.io/name=prometheus label if not set
+      --prometheus-window string  time window for Prometheus metrics aggregation
+                                    (default "15m")
+      --prometheus-aggregation string
+                                    aggregation over the window: avg (default), max
       --pod-count                 includes pod counts for each of the nodes and the whole cluster
       --show-labels               includes node labels in output
 ```
